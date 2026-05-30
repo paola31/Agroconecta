@@ -75,3 +75,7 @@ La aplicacion cuenta con una zona publica y una zona administrativa para visuali
 Las rutas administrativas estan disponibles para fines de visualizacion del frontend. En esta evidencia no se implementa autenticacion backend ni control real de acceso.
 
 El modulo de inventario esta preparado para consumir `/api/productos`. Si el backend no esta disponible, el servicio usa datos locales de respaldo para permitir la navegacion, creacion, edicion y desactivacion de productos dentro del frontend.
+
+## Evidencia EV03
+
+Este repositorio contiene el componente frontend del proyecto formativo AgroConecta, desarrollado con React y Vite. La entrega incluye rutas publicas y administrativas para validar la navegacion, la estructura de componentes y la preparacion del frontend para integrarse posteriormente con servicios backend.
