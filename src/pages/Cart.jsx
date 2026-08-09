@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import pickle from '../assets/pickle.png';
 import tomateCherry from '../assets/tomateCherry.png';
 import carrot from '../assets/carrot.png';
 import lechuga from '../assets/lechuga.png';
 
-const cartItems = [
+const initialCartItems = [
   {
     name: 'Pepino verde',
     quantity: 1,
@@ -35,9 +36,34 @@ const formatCurrency = (value) =>
   value.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
 function Cart() {
+  const [orderMessage, setOrderMessage] = useState('');
+  const [cartItems, setCartItems] = useState(() => {
+    const savedItems = window.localStorage.getItem('agroconecta-cart');
+    return savedItems ? JSON.parse(savedItems) : initialCartItems;
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('agroconecta-cart', JSON.stringify(cartItems));
+    window.dispatchEvent(new Event('agroconecta-cart-updated'));
+  }, [cartItems]);
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 8500;
+  const shipping = cartItems.length > 0 ? 8500 : 0;
   const total = subtotal + shipping;
+
+  const handleRemoveItem = (itemName) => {
+    setCartItems((currentItems) => currentItems.filter((item) => item.name !== itemName));
+  };
+
+  const handleFinishOrder = () => {
+    if (cartItems.length === 0) {
+      setOrderMessage('No hay productos en el carrito para finalizar el pedido.');
+      return;
+    }
+
+    setCartItems([]);
+    setOrderMessage('Compra exitosa. Tu pedido fue registrado correctamente.');
+  };
 
   return (
     <section className="cart-page py-5">
@@ -136,6 +162,11 @@ function Cart() {
           <div className="col-lg-5">
             <div className="card shadow-sm border-0 cart-summary-card">
               <div className="card-body p-4">
+                {orderMessage && (
+                  <div className="alert alert-success border-0 rounded-4 mb-3" role="status">
+                    {orderMessage}
+                  </div>
+                )}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h2 className="h5 fw-bold mb-0">Resumen de compra</h2>
                   <span className="badge text-bg-light text-success">
@@ -147,16 +178,30 @@ function Cart() {
                     <div key={item.name} className="d-flex align-items-center gap-3">
                       <img className="cart-item-image rounded-3" src={item.image} alt={item.name} />
                       <div className="flex-grow-1">
-                        <div className="d-flex justify-content-between align-items-start">
+                        <div className="d-flex justify-content-between align-items-start gap-3">
                           <div>
                             <p className="fw-semibold mb-1">{item.name}</p>
                             <small className="text-muted">x{item.quantity} unidad(es)</small>
                           </div>
-                          <span className="fw-semibold">{formatCurrency(item.price * item.quantity)}</span>
+                          <div className="text-end">
+                            <span className="fw-semibold d-block">{formatCurrency(item.price * item.quantity)}</span>
+                            <button
+                              className="cart-remove-button"
+                              type="button"
+                              onClick={() => handleRemoveItem(item.name)}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
+                  {cartItems.length === 0 && (
+                    <div className="alert alert-light border text-center mb-0" role="status">
+                      No hay productos en el carrito.
+                    </div>
+                  )}
                 </div>
                 <div className="border-top pt-3 mt-2">
                   <div className="d-flex justify-content-between mb-2">
@@ -175,7 +220,7 @@ function Cart() {
                     <span className="fw-bold">Total</span>
                     <span className="fs-5 fw-bold text-success">{formatCurrency(total)}</span>
                   </div>
-                  <button type="button" className="btn btn-success w-100 mt-3">
+                  <button type="button" className="btn btn-success w-100 mt-3" onClick={handleFinishOrder}>
                     Finalizar pedido
                   </button>
                 </div>

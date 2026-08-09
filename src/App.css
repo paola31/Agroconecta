@@ -1441,3 +1441,32 @@ body {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
 }
+
+.cart-remove-button {
+  border: 0;
+  background: transparent;
+  color: #dc3545;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0;
+  text-transform: none;
+}
+
+.cart-remove-button:hover {
+  color: #b02a37;
+  text-decoration: underline;
+}
+
+
+.hero .lead,
+.project-hero .lead,
+.contact-hero .lead,
+.contact-hero .text-white-50,
+.contact-hero .text-white-75 {
+  color: #ffffff !important;
+}
+
+.project-hero .text-muted,
+.projects-hero .text-muted {
+  color: #ffffff !important;
+}

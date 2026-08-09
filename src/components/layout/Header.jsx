@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import logo from '../../assets/logo.svg';
 
@@ -10,6 +11,25 @@ const navigationItems = [
 ];
 
 function Header() {
+    const [cartCount, setCartCount] = useState(0);
+
+    useEffect(() => {
+        const updateCartCount = () => {
+            const savedItems = window.localStorage.getItem('agroconecta-cart');
+            const items = savedItems ? JSON.parse(savedItems) : [];
+            setCartCount(items.reduce((total, item) => total + item.quantity, 0));
+        };
+
+        updateCartCount();
+        window.addEventListener('agroconecta-cart-updated', updateCartCount);
+        window.addEventListener('storage', updateCartCount);
+
+        return () => {
+            window.removeEventListener('agroconecta-cart-updated', updateCartCount);
+            window.removeEventListener('storage', updateCartCount);
+        };
+    }, []);
+
     return (
         <header className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
             <div className="container">
@@ -59,7 +79,7 @@ function Header() {
                                 </svg>
                                 <span
                                     className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  4
+                  {cartCount}
                 </span>
                             </Link>
                         </li>

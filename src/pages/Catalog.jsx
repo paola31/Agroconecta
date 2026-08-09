@@ -112,7 +112,7 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   });
 
-function ProductCard({ image, name, price, rating }) {
+function ProductCard({ image, name, price, rating, onAddToCart }) {
   return (
     <article className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden catalog-card">
       <img className="card-img-top catalog-card-image" src={image} alt={name} />
@@ -127,7 +127,11 @@ function ProductCard({ image, name, price, rating }) {
           </span>
         </div>
         <p className="fs-5 fw-bold text-success mb-3">{formatCurrency(price)}</p>
-        <button className="btn btn-outline-success w-100" type="button">
+        <button
+          className="btn btn-outline-success w-100"
+          type="button"
+          onClick={() => onAddToCart({ image, name, price })}
+        >
           Agregar al carrito
         </button>
       </div>
@@ -138,19 +142,25 @@ function ProductCard({ image, name, price, rating }) {
 function Catalog() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [addedProductName, setAddedProductName] = useState('');
   const itemsPerPage = 6;
 
-  const filteredOffers = useMemo(() => {
+  const displayedProducts = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
     if (!normalized) {
-      return offerProducts;
+      return recentProducts;
     }
 
-    return offerProducts.filter((product) => product.name.toLowerCase().includes(normalized));
+    const allProducts = [...recentProducts, ...offerProducts];
+    const uniqueProducts = allProducts.filter((product, index, products) =>
+      products.findIndex((currentProduct) => currentProduct.name === product.name) === index
+    );
+
+    return uniqueProducts.filter((product) => product.name.toLowerCase().includes(normalized));
   }, [searchTerm]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredOffers.length / itemsPerPage));
-  const paginatedOffers = filteredOffers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(offerProducts.length / itemsPerPage));
+  const paginatedOffers = offerProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -159,6 +169,21 @@ function Catalog() {
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
+  };
+
+  const handleAddToCart = (product) => {
+    const savedItems = window.localStorage.getItem('agroconecta-cart');
+    const currentItems = savedItems ? JSON.parse(savedItems) : [];
+    const existingItem = currentItems.find((item) => item.name === product.name);
+    const nextItems = existingItem
+      ? currentItems.map((item) =>
+          item.name === product.name ? { ...item, quantity: item.quantity + 1 } : item
+        )
+      : [...currentItems, { ...product, quantity: 1 }];
+
+    window.localStorage.setItem('agroconecta-cart', JSON.stringify(nextItems));
+    window.dispatchEvent(new Event('agroconecta-cart-updated'));
+    setAddedProductName(product.name);
   };
 
   return (
@@ -216,12 +241,26 @@ function Catalog() {
             </div>
           </div>
 
+          {addedProductName && (
+            <div className="alert alert-success border-0 rounded-4 mb-4" role="status">
+              {addedProductName} fue agregado al carrito.
+            </div>
+          )}
+
           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {recentProducts.map((product) => (
+            {displayedProducts.map((product) => (
               <div className="col" key={product.name}>
-                <ProductCard {...product} />
+                <ProductCard {...product} onAddToCart={handleAddToCart} />
               </div>
             ))}
+            {displayedProducts.length === 0 && (
+              <div className="col">
+                <div className="alert alert-light border rounded-4 py-5 text-center" role="status">
+                  <h3 className="h5 fw-semibold mb-2">No encontramos resultados</h3>
+                  <p className="text-muted mb-0">Intenta con otro término de búsqueda.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -233,13 +272,13 @@ function Catalog() {
               <span className="catalog-highlight-label text-success mb-2 d-inline-block">Ver ofertas</span>
               <h2 className="display-6 fw-bold mb-0">Ofertas especiales</h2>
             </div>
-            <p className="text-muted mb-0">Mostrando {paginatedOffers.length} de {filteredOffers.length} resultados.</p>
+            <p className="text-muted mb-0">Mostrando {paginatedOffers.length} de {offerProducts.length} resultados.</p>
           </div>
 
           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
             {paginatedOffers.map((product) => (
               <div className="col" key={product.name}>
-                <ProductCard {...product} />
+                <ProductCard {...product} onAddToCart={handleAddToCart} />
               </div>
             ))}
             {paginatedOffers.length === 0 && (
