@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import logo from '../../assets/logo.svg';
+import {clearUserSession, getUserSession, USER_SESSION_EVENT} from '../../services/authSession';
 
 const navigationItems = [
     {label: 'Inicio', to: '/'},
@@ -11,7 +12,9 @@ const navigationItems = [
 ];
 
 function Header() {
+    const navigate = useNavigate();
     const [cartCount, setCartCount] = useState(0);
+    const [userSession, setUserSession] = useState(() => getUserSession());
 
     useEffect(() => {
         const updateCartCount = () => {
@@ -29,6 +32,23 @@ function Header() {
             window.removeEventListener('storage', updateCartCount);
         };
     }, []);
+
+    useEffect(() => {
+        const updateUserSession = () => setUserSession(getUserSession());
+        window.addEventListener(USER_SESSION_EVENT, updateUserSession);
+        window.addEventListener('storage', updateUserSession);
+
+        return () => {
+            window.removeEventListener(USER_SESSION_EVENT, updateUserSession);
+            window.removeEventListener('storage', updateUserSession);
+        };
+    }, []);
+
+    const handleLogout = () => {
+        clearUserSession();
+        setUserSession(null);
+        navigate('/');
+    };
 
     return (
         <header className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
@@ -83,11 +103,24 @@ function Header() {
                 </span>
                             </Link>
                         </li>
-                        <li className="nav-item d-flex align-items-center mt-3 mt-lg-0">
-                            <Link className="btn btn-success px-4" to="/login">
-                                Iniciar sesión
-                            </Link>
-                        </li>
+                        {userSession ? (
+                            <>
+                                <li className="nav-item d-flex align-items-center mt-3 mt-lg-0">
+                                    <span className="text-success fw-semibold">Hola, {userSession.nombre?.split(' ')[0]}</span>
+                                </li>
+                                <li className="nav-item d-flex align-items-center mt-3 mt-lg-0">
+                                    <button className="btn btn-outline-success px-3" type="button" onClick={handleLogout}>
+                                        Cerrar sesión
+                                    </button>
+                                </li>
+                            </>
+                        ) : (
+                            <li className="nav-item d-flex align-items-center mt-3 mt-lg-0">
+                                <Link className="btn btn-success px-4" to="/login">
+                                    Iniciar sesión
+                                </Link>
+                            </li>
+                        )}
                     </ul>
                 </div>
             </div>
