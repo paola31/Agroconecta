@@ -1,4 +1,5 @@
-import {NavLink, Outlet} from 'react-router-dom';
+import {NavLink, Outlet, useNavigate} from 'react-router-dom';
+import {clearAdminSession, getAdminSession} from '../../services/authSession';
 
 const adminNavLinks = [
     {label: 'Panel', to: '/admin/dashboard'},
@@ -10,6 +11,20 @@ const adminNavLinks = [
 ];
 
 function AdminLayout() {
+    const navigate = useNavigate();
+    const adminSession = getAdminSession();
+    const adminInitials = adminSession?.nombre
+        ?.split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'AD';
+
+    const handleLogout = () => {
+        clearAdminSession();
+        navigate('/admin/login', {replace: true});
+    };
+
     return (
         <div className="admin-dashboard d-flex">
             <aside className="admin-sidebar d-none d-lg-flex flex-column p-4 shadow-sm">
@@ -35,9 +50,9 @@ function AdminLayout() {
 
                 <div className="mt-auto pt-4 d-grid gap-3">
                     <a className="nav-link" href="#">Configuración</a>
-                    <NavLink className="btn btn-outline-danger rounded-3" to="/admin/login">
+                    <button className="btn btn-outline-danger rounded-3" type="button" onClick={handleLogout}>
                         Salir
-                    </NavLink>
+                    </button>
                 </div>
             </aside>
 
@@ -53,9 +68,9 @@ function AdminLayout() {
                             <span className="admin-icon-circle">🔔</span>
                         </button>
                         <div className="d-flex align-items-center gap-2">
-                            <div className="admin-avatar">AG</div>
+                            <div className="admin-avatar">{adminInitials}</div>
                             <div>
-                                <p className="mb-0 fw-semibold">Alexander Giles</p>
+                                <p className="mb-0 fw-semibold">{adminSession?.nombre || 'Administrador'}</p>
                                 <small className="text-muted">Administrador</small>
                             </div>
                         </div>

@@ -23,6 +23,7 @@ export default [
       },
       globals: {
         document: 'readonly',
+        Event: 'readonly',
         fetch: 'readonly',
         window: 'readonly',
       },

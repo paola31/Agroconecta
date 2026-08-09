@@ -70,9 +70,16 @@ La aplicacion cuenta con una zona publica y una zona administrativa para visuali
 - `/admin/users`
 - `/admin/reports`
 
-### Nota
+### Acceso administrativo
 
-Las rutas administrativas estan disponibles para fines de visualizacion del frontend. En esta evidencia no se implementa autenticacion backend ni control real de acceso.
+El formulario `/admin/login` valida las credenciales mediante `/api/auth/login`. El frontend permite acceder a las rutas administrativas unicamente cuando la respuesta pertenece a un usuario con rol `admin`. La sesion se conserva en el almacenamiento local del navegador y se elimina al seleccionar `Salir`.
+
+Credenciales del administrador de demostracion:
+
+- Correo: `admin@agroconecta.com`
+- Contrasena: `AgroAdmin2026`
+
+Este control es suficiente para el entorno academico y la demostracion local. Para un despliegue de produccion se debe complementar con tokens seguros y autorizacion de los endpoints en el backend.
 
 El modulo de inventario esta preparado para consumir `/api/productos`. Si el backend no esta disponible, el servicio usa datos locales de respaldo para permitir la navegacion, creacion, edicion y desactivacion de productos dentro del frontend.
 

@@ -1,12 +1,43 @@
-import {useNavigate} from 'react-router-dom';
+import {useEffect, useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import logo from '../assets/logo.svg';
+import {login} from '../services/authApi';
+import {hasAdminSession, saveAdminSession} from '../services/authSession';
 
 function AdminLogin() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (event) => {
+    useEffect(() => {
+        if (hasAdminSession()) {
+            navigate('/admin/dashboard', {replace: true});
+        }
+    }, [navigate]);
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        navigate('/admin/dashboard');
+        setError('');
+        setIsSubmitting(true);
+
+        try {
+            const authenticatedUser = await login(email.trim(), password);
+
+            if (authenticatedUser.rol !== 'admin') {
+                throw new Error('Este usuario no tiene permisos de administrador.');
+            }
+
+            saveAdminSession(authenticatedUser);
+            const destination = location.state?.from || '/admin/dashboard';
+            navigate(destination, {replace: true});
+        } catch (loginError) {
+            setError(loginError.message || 'No fue posible iniciar sesión.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -33,9 +64,15 @@ function AdminLogin() {
                                 <p className="text-muted mb-4">Nuestros proyectos destacados</p>
 
                                 <form className="d-grid gap-3" onSubmit={handleSubmit}>
+                                    {error && (
+                                        <div className="alert alert-danger mb-0" role="alert">
+                                            {error}
+                                        </div>
+                                    )}
                                     <div className="form-floating">
                                         <input className="form-control" type="email" id="adminEmail"
-                                               placeholder="Correo"/>
+                                               placeholder="Correo" value={email}
+                                               onChange={(event) => setEmail(event.target.value)} required/>
                                         <label className="text-muted" htmlFor="adminEmail">
                                             Email
                                         </label>
@@ -43,7 +80,8 @@ function AdminLogin() {
 
                                     <div className="form-floating">
                                         <input className="form-control" type="password" id="adminPassword"
-                                               placeholder="Contraseña"/>
+                                               placeholder="Contraseña" value={password}
+                                               onChange={(event) => setPassword(event.target.value)} required/>
                                         <label className="text-muted" htmlFor="adminPassword">
                                             Password
                                         </label>
@@ -61,8 +99,9 @@ function AdminLogin() {
                                         </a>
                                     </div>
 
-                                    <button className="btn btn-success btn-lg w-100 rounded-3" type="submit">
-                                        Iniciar sesión
+                                    <button className="btn btn-success btn-lg w-100 rounded-3" type="submit"
+                                            disabled={isSubmitting}>
+                                        {isSubmitting ? 'Validando...' : 'Iniciar sesión'}
                                     </button>
 
                                     <button

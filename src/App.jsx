@@ -21,6 +21,7 @@ import AdminAddSupplier from './pages/AdminAddSupplier';
 import AdminSupplierDetail from './pages/AdminSupplierDetail';
 import AdminOrders from './pages/AdminOrders';
 import AdminUsers from './pages/AdminUsers';
+import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute';
 
 function App() {
   return (
@@ -39,18 +40,20 @@ function App() {
         </Route>
         <Route path="/admin/login" element={<AdminLogin />} />
         {/* Rutas administrativas separadas para gestionar la operacion interna. */}
-        <Route path="/admin/*" element={<AdminLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="inventory" element={<AdminInventory />} />
-          <Route path="inventory/:productId" element={<AdminProductDetail />} />
-          <Route path="inventory/new" element={<AdminAddProduct />} />
-          <Route path="suppliers" element={<AdminSuppliers />} />
-          <Route path="suppliers/:supplierId" element={<AdminSupplierDetail />} />
-          <Route path="suppliers/new" element={<AdminAddSupplier />} />
-          <Route path="orders" element={<AdminOrders />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="reports" element={<AdminReports />} />
+        <Route element={<ProtectedAdminRoute />}>
+          <Route path="/admin/*" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="inventory" element={<AdminInventory />} />
+            <Route path="inventory/:productId" element={<AdminProductDetail />} />
+            <Route path="inventory/new" element={<AdminAddProduct />} />
+            <Route path="suppliers" element={<AdminSuppliers />} />
+            <Route path="suppliers/:supplierId" element={<AdminSupplierDetail />} />
+            <Route path="suppliers/new" element={<AdminAddSupplier />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="reports" element={<AdminReports />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
