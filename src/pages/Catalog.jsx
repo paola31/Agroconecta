@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import onions from '../assets/onions.png';
 import carrots from '../assets/carrots.png';
 import tomate from '../assets/tomate.png';
@@ -8,6 +8,7 @@ import lettuce from '../assets/lettuce.png';
 import banana from '../assets/banana.png';
 import purpleOnions from '../assets/purpleOnions.png';
 import papa from '../assets/papa.png';
+import { getProductos } from '../services/productosApi';
 
 const recentProducts = [
   {
@@ -92,8 +93,8 @@ const offerProducts = [
     rating: 4.7,
   },
   {
-    name: 'Papa',
-    price: 5000,
+    name: 'Papa Pastusa',
+    price: 2500,
     image: papa,
     rating: 4.8,
   },
@@ -104,6 +105,19 @@ const offerProducts = [
     rating: 4.9,
   },
 ];
+
+const imageByProductName = (name) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('papa')) return papa;
+  if (normalized.includes('ajo')) return garlic;
+  if (normalized.includes('cebolla')) return onions;
+  if (normalized.includes('zanahoria')) return carrots;
+  if (normalized.includes('tomate')) return tomate;
+  if (normalized.includes('uva')) return uvas;
+  if (normalized.includes('lechuga')) return lettuce;
+  if (normalized.includes('banano')) return banana;
+  return papa;
+};
 
 const formatCurrency = (value) =>
   value.toLocaleString('es-CO', {
@@ -143,24 +157,47 @@ function Catalog() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [addedProductName, setAddedProductName] = useState('');
+  const [apiProducts, setApiProducts] = useState([]);
   const itemsPerPage = 6;
 
+  useEffect(() => {
+    let active = true;
+    getProductos().then((products) => {
+      if (!active) return;
+      setApiProducts(products.map((product) => ({
+        id: product.id,
+        name: product.nombre,
+        price: Number(product.precioUnitario),
+        image: product.imagenUrl && !product.imagenUrl.includes('example.com')
+          ? product.imagenUrl
+          : imageByProductName(product.nombre),
+        rating: 4.5,
+      })));
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const displayedProducts = useMemo(() => {
+    const products = apiProducts.length > 0 ? apiProducts : recentProducts;
     const normalized = searchTerm.trim().toLowerCase();
     if (!normalized) {
-      return recentProducts;
+      return products;
     }
+    return products.filter((product) => product.name.toLowerCase().includes(normalized));
+  }, [apiProducts, searchTerm]);
 
-    const allProducts = [...recentProducts, ...offerProducts];
-    const uniqueProducts = allProducts.filter((product, index, products) =>
-      products.findIndex((currentProduct) => currentProduct.name === product.name) === index
-    );
-
-    return uniqueProducts.filter((product) => product.name.toLowerCase().includes(normalized));
+  const filteredOffers = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+    if (!normalized) {
+      return offerProducts;
+    }
+    return offerProducts.filter((product) => product.name.toLowerCase().includes(normalized));
   }, [searchTerm]);
 
-  const totalPages = Math.max(1, Math.ceil(offerProducts.length / itemsPerPage));
-  const paginatedOffers = offerProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredOffers.length / itemsPerPage));
+  const paginatedOffers = filteredOffers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -272,7 +309,7 @@ function Catalog() {
               <span className="catalog-highlight-label text-success mb-2 d-inline-block">Ver ofertas</span>
               <h2 className="display-6 fw-bold mb-0">Ofertas especiales</h2>
             </div>
-            <p className="text-muted mb-0">Mostrando {paginatedOffers.length} de {offerProducts.length} resultados.</p>
+            <p className="text-muted mb-0">Mostrando {paginatedOffers.length} de {filteredOffers.length} resultados.</p>
           </div>
 
           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
@@ -291,7 +328,7 @@ function Catalog() {
             )}
           </div>
 
-          <nav aria-label="Navegación de ofertas">
+          {filteredOffers.length > itemsPerPage && <nav aria-label="Navegación de ofertas">
             <ul className="pagination justify-content-center gap-2">
               {Array.from({ length: totalPages }).map((_, index) => {
                 const pageNumber = index + 1;
@@ -310,7 +347,7 @@ function Catalog() {
                 );
               })}
             </ul>
-          </nav>
+          </nav>}
         </div>
       </section>
     </main>
