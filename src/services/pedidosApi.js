@@ -1,3 +1,5 @@
+import {getUserSession} from "./authSession";
+
 const PEDIDOS_URL = '/api/pedidos';
 
 async function readError(response) {
@@ -10,10 +12,12 @@ async function readError(response) {
 }
 
 export async function createPedido(pedido) {
+  const token = getUserSession()?.token;
   const response = await fetch(PEDIDOS_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? {Authorization: "Bearer " + token} : {}),
     },
     body: JSON.stringify(pedido),
   });

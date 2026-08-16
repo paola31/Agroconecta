@@ -1,4 +1,14 @@
+import {getAdminSession} from "./authSession";
+
 const API_BASE_URL = '/api/productos';
+
+function adminHeaders() {
+    const token = getAdminSession()?.token;
+    return {
+        "Content-Type": "application/json",
+        ...(token ? {Authorization: "Bearer " + token} : {}),
+    };
+}
 
 const initialMockProducts = [
     {
@@ -47,7 +57,7 @@ async function requestWithFallback(request, fallback) {
 async function handleResponse(response) {
     if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        const message = errorBody?.messages?.join(', ') || 'Error al comunicarse con el backend';
+        const message = errorBody?.messages?.join(', ') || errorBody?.message || 'Error al comunicarse con el backend';
         throw new Error(message);
     }
 
@@ -87,78 +97,27 @@ export async function getProductoById(id) {
 }
 
 export async function createProducto(producto) {
-    return requestWithFallback(
-        async () => {
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(producto),
-            });
-
-            return handleResponse(response);
-        },
-        () => {
-            const createdProduct = {
-                id: String(Date.now()),
-                activo: true,
-                creadoEn: new Date().toISOString(),
-                ...producto,
-            };
-
-            mockProducts = [createdProduct, ...mockProducts];
-            return createdProduct;
-        },
-    );
+    const response = await fetch(API_BASE_URL, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify(producto),
+    });
+    return handleResponse(response);
 }
 
 export async function updateProducto(id, producto) {
-    return requestWithFallback(
-        async () => {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(producto),
-            });
-
-            return handleResponse(response);
-        },
-        () => {
-            const productIndex = mockProducts.findIndex((item) => String(item.id) === String(id));
-
-            if (productIndex === -1) {
-                throw new Error('Producto no encontrado en los datos locales.');
-            }
-
-            const updatedProduct = {
-                ...mockProducts[productIndex],
-                ...producto,
-                id: mockProducts[productIndex].id,
-            };
-
-            mockProducts = mockProducts.map((item, index) => (index === productIndex ? updatedProduct : item));
-            return updatedProduct;
-        },
-    );
+    const response = await fetch(API_BASE_URL + "/" + id, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify(producto),
+    });
+    return handleResponse(response);
 }
 
 export async function deleteProducto(id) {
-    return requestWithFallback(
-        async () => {
-            const response = await fetch(`${API_BASE_URL}/${id}`, {
-                method: 'DELETE',
-            });
-
-            return handleResponse(response);
-        },
-        () => {
-            mockProducts = mockProducts.map((item) => (
-                String(item.id) === String(id) ? {...item, activo: false} : item
-            ));
-            return null;
-        },
-    );
+    const response = await fetch(API_BASE_URL + "/" + id, {
+        method: "DELETE",
+        headers: adminHeaders(),
+    });
+    return handleResponse(response);
 }
