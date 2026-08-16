@@ -1,4 +1,4 @@
-import {getUserSession} from "./authSession";
+import {clearUserSession, getUserSession} from "./authSession";
 
 const PEDIDOS_URL = '/api/pedidos';
 
@@ -23,6 +23,9 @@ export async function createPedido(pedido) {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearUserSession();
+    }
     throw new Error(await readError(response));
   }
 
